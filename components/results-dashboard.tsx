@@ -1,3 +1,4 @@
+import { AttackSummaryBadges } from "@/components/attack-summary-badges";
 import { GlassCard } from "@/components/ui/glass-card";
 import { AnalysisRequest, AnalysisResponse } from "@/lib/types";
 import {
@@ -36,6 +37,10 @@ export function ResultsDashboard({
           <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
             <div className="space-y-5">
               <div className="flex flex-wrap items-center gap-3">
+                <AttackSummaryBadges
+                  attackType={result.attack_type}
+                  targetingLevel={result.targeting_level}
+                />
                 <span
                   className={cn(
                     "inline-flex rounded-full border px-4 py-1.5 text-sm font-semibold",

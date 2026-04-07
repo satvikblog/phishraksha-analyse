@@ -1,4 +1,6 @@
 export type RiskLevel = "Low" | "Medium" | "High";
+export type AttackType = "Phishing" | "Spear Phishing";
+export type TargetingLevel = "Mass" | "Targeted";
 
 export interface AnalysisRequest {
   subject: string;
@@ -8,6 +10,8 @@ export interface AnalysisRequest {
 }
 
 export interface AnalysisResponse {
+  attack_type?: AttackType;
+  targeting_level?: TargetingLevel;
   urls_analyzed: string[];
   total_urls: number;
   ai_score: number;

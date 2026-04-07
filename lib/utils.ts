@@ -1,4 +1,11 @@
-import { AnalysisRequest, AnalysisResponse, RiskLevel, ValidationErrors } from "@/lib/types";
+import {
+  AnalysisRequest,
+  AnalysisResponse,
+  AttackType,
+  RiskLevel,
+  TargetingLevel,
+  ValidationErrors,
+} from "@/lib/types";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -58,6 +65,46 @@ export function getMailClassification(risk: RiskLevel) {
   return risk === "Low" ? "Non-Phishing Mail" : "Phishing Mail";
 }
 
+export function getAttackTypeDisplay(attackType?: string) {
+  return attackType === "Phishing" || attackType === "Spear Phishing"
+    ? attackType
+    : "Unknown";
+}
+
+export function getTargetingLevelDisplay(targetingLevel?: string) {
+  return targetingLevel === "Mass" || targetingLevel === "Targeted"
+    ? targetingLevel
+    : "Unknown";
+}
+
+export function getAttackTypeBadgeClass(attackType?: string) {
+  const normalized = getAttackTypeDisplay(attackType);
+
+  if (normalized === "Spear Phishing") {
+    return "border-rose-400/35 bg-rose-400/12 text-rose-100";
+  }
+
+  if (normalized === "Phishing") {
+    return "border-amber-300/35 bg-amber-300/12 text-amber-100";
+  }
+
+  return "border-white/14 bg-white/8 text-slate-200";
+}
+
+export function getTargetingLevelClass(targetingLevel?: string) {
+  const normalized = getTargetingLevelDisplay(targetingLevel);
+
+  if (normalized === "Targeted") {
+    return "border-rose-400/30 bg-rose-400/12 text-rose-100 font-semibold";
+  }
+
+  if (normalized === "Mass") {
+    return "border-white/14 bg-white/8 text-slate-200";
+  }
+
+  return "border-white/14 bg-white/6 text-slate-300";
+}
+
 export function sanitizeAnalysisRequest(
   input: Partial<Record<keyof AnalysisRequest, unknown>>,
 ): AnalysisRequest {
@@ -112,6 +159,8 @@ export function isAnalysisResponse(value: unknown): value is AnalysisResponse {
   const allowedRiskLevels: RiskLevel[] = ["Low", "Medium", "High"];
 
   return (
+    isOptionalAttackType(payload.attack_type) &&
+    isOptionalTargetingLevel(payload.targeting_level) &&
     isStringArray(payload.urls_analyzed) &&
     typeof payload.total_urls === "number" &&
     typeof payload.ai_score === "number" &&
@@ -127,4 +176,18 @@ export function isAnalysisResponse(value: unknown): value is AnalysisResponse {
 
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function isOptionalAttackType(value: unknown): value is AttackType | undefined {
+  return (
+    typeof value === "undefined" ||
+    value === "Phishing" ||
+    value === "Spear Phishing"
+  );
+}
+
+function isOptionalTargetingLevel(
+  value: unknown,
+): value is TargetingLevel | undefined {
+  return typeof value === "undefined" || value === "Mass" || value === "Targeted";
 }

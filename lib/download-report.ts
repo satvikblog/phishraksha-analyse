@@ -1,6 +1,6 @@
-import { DownloadReport } from "@/lib/types";
+import { StoredAnalysisReport } from "@/lib/types";
 
-export function downloadJsonReport(report: DownloadReport) {
+export function downloadJsonReport<TRequest>(report: StoredAnalysisReport<TRequest>) {
   const stamp = report.generatedAt.replaceAll(":", "-").replaceAll(".", "-");
   const filename = `phishraksha-report-${stamp}.json`;
   const blob = new Blob([JSON.stringify(report, null, 2)], {

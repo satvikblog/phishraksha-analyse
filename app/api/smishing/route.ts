@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { AnalysisRequest, ApiErrorResponse } from "@/lib/types";
-import { isAnalysisResponse, validateAnalysisRequest } from "@/lib/utils";
+import { ApiErrorResponse, SmishingRequest } from "@/lib/types";
+import { isAnalysisResponse, validateSmishingRequest } from "@/lib/utils";
 
-const DEFAULT_UPSTREAM_URL = "https://api.phishraksha.tech/webhook/check";
+const DEFAULT_UPSTREAM_URL =
+  "https://api.phishraksha.tech/webhook/smishing-check";
 const MAX_NETWORK_ATTEMPTS = 2;
 const UPSTREAM_TIMEOUT_MS = 25000;
 
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const validation = validateAnalysisRequest(
+    const validation = validateSmishingRequest(
       payload as Record<string, unknown>,
     );
 
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
 
       return NextResponse.json<ApiErrorResponse>(
         {
-          message: "Invalid analysis request.",
+          message: "Invalid smishing analysis request.",
           details,
         },
         { status: 400 },
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json<ApiErrorResponse>(
       {
-        message: "Failed to analyze email.",
+        message: "Failed to analyze SMS.",
         details:
           error instanceof Error
             ? error.message
@@ -63,7 +64,7 @@ export async function POST(request: Request) {
   }
 }
 
-async function analyzeWithRetries(payload: AnalysisRequest) {
+async function analyzeWithRetries(payload: SmishingRequest) {
   let lastFailure:
     | {
         status: number;
@@ -75,7 +76,7 @@ async function analyzeWithRetries(payload: AnalysisRequest) {
   for (let attempt = 1; attempt <= MAX_NETWORK_ATTEMPTS; attempt += 1) {
     try {
       const upstreamResponse = await fetch(
-        process.env.PHISHRAKSHA_API_URL ?? DEFAULT_UPSTREAM_URL,
+        process.env.PHISHRAKSHA_SMISHING_API_URL ?? DEFAULT_UPSTREAM_URL,
         {
           method: "POST",
           headers: {
@@ -96,9 +97,9 @@ async function analyzeWithRetries(payload: AnalysisRequest) {
       if (!upstreamResponse.ok) {
         lastFailure = {
           status: 502,
-          message: "Failed to analyze email.",
+          message: "Failed to analyze SMS.",
           details: buildUpstreamFailureDetails({
-            channel: "email",
+            channel: "smishing",
             status: upstreamStatus,
             contentType: upstreamContentType,
             responseText: trimmedResponse,
@@ -110,9 +111,9 @@ async function analyzeWithRetries(payload: AnalysisRequest) {
       if (!trimmedResponse) {
         lastFailure = {
           status: 502,
-          message: "Live analyzer is temporarily unavailable for this email.",
+          message: "Live smishing analyzer is temporarily unavailable.",
           details:
-            "The upstream email webhook completed without returning a JSON body.",
+            "The upstream smishing webhook completed without returning a JSON body.",
         };
         break;
       }
@@ -124,8 +125,8 @@ async function analyzeWithRetries(payload: AnalysisRequest) {
       } catch {
         lastFailure = {
           status: 502,
-          message: "Live analyzer returned unreadable data.",
-          details: `The upstream email webhook returned a non-JSON payload with content-type "${upstreamContentType}".`,
+          message: "Live smishing analyzer returned unreadable data.",
+          details: `The upstream smishing webhook returned a non-JSON payload with content-type "${upstreamContentType}".`,
         };
         break;
       }
@@ -133,9 +134,9 @@ async function analyzeWithRetries(payload: AnalysisRequest) {
       if (!isAnalysisResponse(parsed)) {
         lastFailure = {
           status: 502,
-          message: "Live analyzer returned an unexpected payload.",
+          message: "Live smishing analyzer returned an unexpected payload.",
           details:
-            "The upstream webhook responded, but its JSON shape did not match the expected analysis schema.",
+            "The upstream smishing webhook responded, but its JSON shape did not match the expected analysis schema.",
         };
         break;
       }
@@ -147,7 +148,7 @@ async function analyzeWithRetries(payload: AnalysisRequest) {
     } catch (error) {
       lastFailure = {
         status: 502,
-        message: "Unable to reach the live analyzer.",
+        message: "Unable to reach the live smishing analyzer.",
         details:
           attempt < MAX_NETWORK_ATTEMPTS
             ? `Attempt ${attempt} failed while contacting the upstream service. Retrying automatically.`
@@ -161,7 +162,7 @@ async function analyzeWithRetries(payload: AnalysisRequest) {
   return {
     ok: false as const,
     status: lastFailure?.status ?? 502,
-    message: lastFailure?.message ?? "Failed to analyze email.",
+    message: lastFailure?.message ?? "Failed to analyze SMS.",
     details: lastFailure?.details,
   };
 }

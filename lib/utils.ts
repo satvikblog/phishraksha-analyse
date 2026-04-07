@@ -3,8 +3,12 @@ import {
   AnalysisResponse,
   AttackType,
   RiskLevel,
+  SmishingRequest,
+  SmishingValidationErrors,
   TargetingLevel,
   ValidationErrors,
+  VishingRequest,
+  VishingValidationErrors,
 } from "@/lib/types";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -116,6 +120,28 @@ export function sanitizeAnalysisRequest(
   };
 }
 
+export function sanitizeSmishingRequest(
+  input: Partial<Record<keyof SmishingRequest, unknown>>,
+): SmishingRequest {
+  return {
+    sender_name:
+      typeof input.sender_name === "string" ? input.sender_name.trim() : "",
+    sms_text: typeof input.sms_text === "string" ? input.sms_text.trim() : "",
+  };
+}
+
+export function sanitizeVishingRequest(
+  input: Partial<Record<keyof VishingRequest, unknown>>,
+): VishingRequest {
+  return {
+    call_from: typeof input.call_from === "string" ? input.call_from.trim() : "",
+    call_transcript:
+      typeof input.call_transcript === "string"
+        ? input.call_transcript.trim()
+        : "",
+  };
+}
+
 export function validateAnalysisRequest(
   input: Partial<Record<keyof AnalysisRequest, unknown>>,
 ): {
@@ -143,6 +169,50 @@ export function validateAnalysisRequest(
     errors.receiver = "Receiver email is required.";
   } else if (!EMAIL_PATTERN.test(data.receiver)) {
     errors.receiver = "Enter a valid receiver email address.";
+  }
+
+  return Object.keys(errors).length > 0
+    ? { data: null, errors }
+    : { data, errors };
+}
+
+export function validateSmishingRequest(
+  input: Partial<Record<keyof SmishingRequest, unknown>>,
+): {
+  data: SmishingRequest | null;
+  errors: SmishingValidationErrors;
+} {
+  const data = sanitizeSmishingRequest(input);
+  const errors: SmishingValidationErrors = {};
+
+  if (!data.sender_name) {
+    errors.sender_name = "Sender name is required.";
+  }
+
+  if (!data.sms_text) {
+    errors.sms_text = "SMS text is required.";
+  }
+
+  return Object.keys(errors).length > 0
+    ? { data: null, errors }
+    : { data, errors };
+}
+
+export function validateVishingRequest(
+  input: Partial<Record<keyof VishingRequest, unknown>>,
+): {
+  data: VishingRequest | null;
+  errors: VishingValidationErrors;
+} {
+  const data = sanitizeVishingRequest(input);
+  const errors: VishingValidationErrors = {};
+
+  if (!data.call_from) {
+    errors.call_from = "Caller identity is required.";
+  }
+
+  if (!data.call_transcript) {
+    errors.call_transcript = "Call transcript is required.";
   }
 
   return Object.keys(errors).length > 0

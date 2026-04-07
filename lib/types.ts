@@ -9,6 +9,16 @@ export interface AnalysisRequest {
   receiver: string;
 }
 
+export interface SmishingRequest {
+  sender_name: string;
+  sms_text: string;
+}
+
+export interface VishingRequest {
+  call_from: string;
+  call_transcript: string;
+}
+
 export interface AnalysisResponse {
   attack_type?: AttackType;
   targeting_level?: TargetingLevel;
@@ -24,14 +34,20 @@ export interface AnalysisResponse {
 }
 
 export type ValidationErrors = Partial<Record<keyof AnalysisRequest, string>>;
+export type SmishingValidationErrors = Partial<Record<keyof SmishingRequest, string>>;
+export type VishingValidationErrors = Partial<Record<keyof VishingRequest, string>>;
 
 export interface ApiErrorResponse {
   message: string;
   details?: string;
 }
 
-export interface DownloadReport {
+export interface StoredAnalysisReport<TRequest> {
   generatedAt: string;
-  request: AnalysisRequest;
+  request: TRequest;
   response: AnalysisResponse;
 }
+
+export type DownloadReport = StoredAnalysisReport<AnalysisRequest>;
+export type SmishingReport = StoredAnalysisReport<SmishingRequest>;
+export type VishingReport = StoredAnalysisReport<VishingRequest>;

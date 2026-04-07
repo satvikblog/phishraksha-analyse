@@ -4,7 +4,14 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface SiteHeaderProps {
-  currentPath?: "/" | "/analyse" | "/results";
+  currentPath?:
+    | "/"
+    | "/analyse"
+    | "/results"
+    | "/smishing"
+    | "/vishing"
+    | "/smishing/result"
+    | "/vishing/result";
 }
 
 export function SiteHeader({ currentPath }: SiteHeaderProps) {
@@ -32,14 +39,38 @@ export function SiteHeader({ currentPath }: SiteHeaderProps) {
           <NavLink href="/analyse" active={currentPath === "/analyse"}>
             Analyse
           </NavLink>
+          <NavLink
+            href="/smishing"
+            active={
+              currentPath === "/smishing" || currentPath === "/smishing/result"
+            }
+          >
+            Smishing
+          </NavLink>
+          <NavLink
+            href="/vishing"
+            active={
+              currentPath === "/vishing" || currentPath === "/vishing/result"
+            }
+          >
+            Vishing
+          </NavLink>
         </nav>
 
-        <Link
-          href="/analyse"
-          className="inline-flex items-center justify-center rounded-full border border-cyan-300/18 bg-cyan-300/10 px-4 py-2 text-sm font-medium text-cyan-50 hover:-translate-y-0.5 hover:border-cyan-200/32 hover:bg-cyan-300/16"
-        >
-          Launch Scanner
-        </Link>
+        <div className="hidden items-center gap-2 sm:flex">
+          <Link
+            href="/smishing"
+            className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/6 px-4 py-2 text-sm font-medium text-white hover:bg-white/10"
+          >
+            Smishing
+          </Link>
+          <Link
+            href="/analyse"
+            className="inline-flex items-center justify-center rounded-full border border-cyan-300/18 bg-cyan-300/10 px-4 py-2 text-sm font-medium text-cyan-50 hover:-translate-y-0.5 hover:border-cyan-200/32 hover:bg-cyan-300/16"
+          >
+            Launch Scanner
+          </Link>
+        </div>
       </div>
     </header>
   );

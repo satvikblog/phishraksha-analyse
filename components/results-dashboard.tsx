@@ -1,6 +1,12 @@
 import { GlassCard } from "@/components/ui/glass-card";
 import { AnalysisRequest, AnalysisResponse } from "@/lib/types";
-import { clampScore, cn, formatPercent, riskStyles } from "@/lib/utils";
+import {
+  clampScore,
+  cn,
+  formatPercent,
+  getMailClassification,
+  riskStyles,
+} from "@/lib/utils";
 
 interface ResultsDashboardProps {
   result: AnalysisResponse;
@@ -20,6 +26,7 @@ export function ResultsDashboard({
       : result.final_risk === "Medium"
         ? "text-amber-100"
         : "text-emerald-100";
+  const verdict = getMailClassification(result.final_risk);
 
   return (
     <div className="space-y-6">
@@ -45,6 +52,9 @@ export function ResultsDashboard({
               <div className="space-y-3">
                 <p className="font-mono text-xs uppercase tracking-[0.28em] text-slate-300/70">
                   Investigation results
+                </p>
+                <p className={cn("text-xl font-bold uppercase tracking-[0.16em] sm:text-2xl", riskAccent)}>
+                  {verdict}
                 </p>
                 <h2 className="max-w-4xl break-words text-balance text-3xl font-semibold tracking-tight text-white sm:text-4xl">
                   {request.subject}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { LatestVerdictBanner } from "@/components/latest-verdict-banner";
 import { PhishRakshaDashboard } from "@/components/phishraksha-dashboard";
 import { SiteHeader } from "@/components/site-header";
 
@@ -34,6 +35,7 @@ export function AnalysisWorkspace() {
               Back to Home
             </Link>
           </div>
+          <LatestVerdictBanner />
         </section>
 
         <section className="mx-auto w-full max-w-5xl px-4 pb-20 sm:px-6">

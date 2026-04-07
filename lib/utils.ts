@@ -54,6 +54,10 @@ export function formatPercent(value: number) {
   return `${clampScore(value)}%`;
 }
 
+export function getMailClassification(risk: RiskLevel) {
+  return risk === "Low" ? "Non-Phishing Mail" : "Phishing Mail";
+}
+
 export function sanitizeAnalysisRequest(
   input: Partial<Record<keyof AnalysisRequest, unknown>>,
 ): AnalysisRequest {

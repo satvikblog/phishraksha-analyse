@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { ApiErrorResponse, SmishingRequest } from "@/lib/types";
-import { isAnalysisResponse, validateSmishingRequest } from "@/lib/utils";
+import { normalizeAnalysisResponse, validateSmishingRequest } from "@/lib/utils";
 
 const DEFAULT_UPSTREAM_URL =
   "https://api.phishraksha.tech/webhook/smishing-check";
@@ -131,7 +131,9 @@ async function analyzeWithRetries(payload: SmishingRequest) {
         break;
       }
 
-      if (!isAnalysisResponse(parsed)) {
+      const normalizedResponse = normalizeAnalysisResponse(parsed);
+
+      if (!normalizedResponse) {
         lastFailure = {
           status: 502,
           message: "Live smishing analyzer returned an unexpected payload.",
@@ -143,7 +145,7 @@ async function analyzeWithRetries(payload: SmishingRequest) {
 
       return {
         ok: true as const,
-        data: parsed,
+        data: normalizedResponse,
       };
     } catch (error) {
       lastFailure = {

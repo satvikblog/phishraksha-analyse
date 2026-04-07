@@ -1,6 +1,11 @@
 export type RiskLevel = "Low" | "Medium" | "High";
-export type AttackType = "Phishing" | "Spear Phishing";
-export type TargetingLevel = "Mass" | "Targeted";
+export type AttackType =
+  | "Phishing"
+  | "Spear Phishing"
+  | "Smishing"
+  | "Vishing"
+  | (string & {});
+export type TargetingLevel = "Mass" | "Targeted" | (string & {});
 
 export interface AnalysisRequest {
   subject: string;

@@ -1,11 +1,9 @@
 import {
   AnalysisRequest,
   AnalysisResponse,
-  AttackType,
   RiskLevel,
   SmishingRequest,
   SmishingValidationErrors,
-  TargetingLevel,
   ValidationErrors,
   VishingRequest,
   VishingValidationErrors,
@@ -70,21 +68,33 @@ export function getMailClassification(risk: RiskLevel) {
 }
 
 export function getAttackTypeDisplay(attackType?: string) {
-  return attackType === "Phishing" || attackType === "Spear Phishing"
-    ? attackType
-    : "Unknown";
+  if (typeof attackType !== "string") {
+    return "Unknown";
+  }
+
+  const normalized = attackType.trim();
+
+  return normalized ? normalized : "Unknown";
 }
 
 export function getTargetingLevelDisplay(targetingLevel?: string) {
-  return targetingLevel === "Mass" || targetingLevel === "Targeted"
-    ? targetingLevel
-    : "Unknown";
+  if (typeof targetingLevel !== "string") {
+    return "Unknown";
+  }
+
+  const normalized = targetingLevel.trim();
+
+  return normalized ? normalized : "Unknown";
 }
 
 export function getAttackTypeBadgeClass(attackType?: string) {
   const normalized = getAttackTypeDisplay(attackType);
 
-  if (normalized === "Spear Phishing") {
+  if (
+    normalized === "Spear Phishing" ||
+    normalized === "Smishing" ||
+    normalized === "Vishing"
+  ) {
     return "border-rose-400/35 bg-rose-400/12 text-rose-100";
   }
 
@@ -221,43 +231,79 @@ export function validateVishingRequest(
 }
 
 export function isAnalysisResponse(value: unknown): value is AnalysisResponse {
+  return normalizeAnalysisResponse(value) !== null;
+}
+
+export function normalizeAnalysisResponse(value: unknown): AnalysisResponse | null {
   if (!value || typeof value !== "object") {
-    return false;
+    return null;
   }
 
   const payload = value as Record<string, unknown>;
   const allowedRiskLevels: RiskLevel[] = ["Low", "Medium", "High"];
+  const finalRisk = payload.final_risk;
+  const aiScore = toFiniteNumber(payload.ai_score);
+  const confidenceScore = toFiniteNumber(payload.confidence_score);
+  const reasons = toStringArray(payload.reasons);
+  const suspiciousIndicators = toStringArray(payload.suspicious_indicators);
 
-  return (
-    isOptionalAttackType(payload.attack_type) &&
-    isOptionalTargetingLevel(payload.targeting_level) &&
-    isStringArray(payload.urls_analyzed) &&
-    typeof payload.total_urls === "number" &&
-    typeof payload.ai_score === "number" &&
-    typeof payload.vt_malicious_total === "number" &&
-    typeof payload.vt_suspicious_total === "number" &&
-    typeof payload.confidence_score === "number" &&
-    typeof payload.final_risk === "string" &&
-    allowedRiskLevels.includes(payload.final_risk as RiskLevel) &&
-    isStringArray(payload.reasons) &&
-    isStringArray(payload.suspicious_indicators)
-  );
+  if (
+    typeof finalRisk !== "string" ||
+    !allowedRiskLevels.includes(finalRisk as RiskLevel) ||
+    aiScore === null ||
+    confidenceScore === null ||
+    reasons === null ||
+    suspiciousIndicators === null
+  ) {
+    return null;
+  }
+
+  const urlsAnalyzed = toOptionalStringArray(payload.urls_analyzed) ?? [];
+  const totalUrls = toFiniteNumber(payload.total_urls) ?? urlsAnalyzed.length;
+  const vtMaliciousTotal = toFiniteNumber(payload.vt_malicious_total) ?? 0;
+  const vtSuspiciousTotal = toFiniteNumber(payload.vt_suspicious_total) ?? 0;
+  const attackType = toOptionalString(payload.attack_type);
+  const targetingLevel = toOptionalString(payload.targeting_level);
+
+  return {
+    attack_type: attackType,
+    targeting_level: targetingLevel,
+    urls_analyzed: urlsAnalyzed,
+    total_urls: totalUrls,
+    ai_score: aiScore,
+    vt_malicious_total: vtMaliciousTotal,
+    vt_suspicious_total: vtSuspiciousTotal,
+    final_risk: finalRisk as RiskLevel,
+    confidence_score: confidenceScore,
+    reasons,
+    suspicious_indicators: suspiciousIndicators,
+  };
 }
 
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === "string");
+function toFiniteNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
-function isOptionalAttackType(value: unknown): value is AttackType | undefined {
-  return (
-    typeof value === "undefined" ||
-    value === "Phishing" ||
-    value === "Spear Phishing"
-  );
+function toStringArray(value: unknown): string[] | null {
+  return Array.isArray(value) && value.every((item) => typeof item === "string")
+    ? value
+    : null;
 }
 
-function isOptionalTargetingLevel(
-  value: unknown,
-): value is TargetingLevel | undefined {
-  return typeof value === "undefined" || value === "Mass" || value === "Targeted";
+function toOptionalStringArray(value: unknown): string[] | null {
+  if (typeof value === "undefined") {
+    return null;
+  }
+
+  return toStringArray(value);
+}
+
+function toOptionalString(value: unknown): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const normalized = value.trim();
+
+  return normalized ? normalized : undefined;
 }

@@ -11,7 +11,7 @@ import {
   VishingRequest,
   VishingValidationErrors,
 } from "@/lib/types";
-import { isAnalysisResponse, validateVishingRequest } from "@/lib/utils";
+import { normalizeAnalysisResponse, validateVishingRequest } from "@/lib/utils";
 
 const initialFormValues: VishingRequest = {
   call_from: "",
@@ -96,14 +96,16 @@ export function VishingDashboard() {
         throw new Error(details ? `${message} ${details}` : message);
       }
 
-      if (!isAnalysisResponse(payload)) {
+      const normalizedResponse = normalizeAnalysisResponse(payload);
+
+      if (!normalizedResponse) {
         throw new Error("Analyzer returned an unexpected response.");
       }
 
       saveVishingReportToSession({
         generatedAt: new Date().toISOString(),
         request: validation.data,
-        response: payload,
+        response: normalizedResponse,
       });
       router.push("/vishing/result");
     } catch (error) {

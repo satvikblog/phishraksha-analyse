@@ -11,7 +11,7 @@ import {
   ApiErrorResponse,
   ValidationErrors,
 } from "@/lib/types";
-import { isAnalysisResponse, validateAnalysisRequest } from "@/lib/utils";
+import { normalizeAnalysisResponse, validateAnalysisRequest } from "@/lib/utils";
 
 const initialFormValues: AnalysisRequest = {
   subject: "",
@@ -80,14 +80,16 @@ export function PhishRakshaDashboard() {
         throw new Error(details ? `${message} ${details}` : message);
       }
 
-      if (!isAnalysisResponse(payload)) {
+      const normalizedResponse = normalizeAnalysisResponse(payload);
+
+      if (!normalizedResponse) {
         throw new Error("Analyzer returned an unexpected response.");
       }
 
       saveReportToSession({
         generatedAt: new Date().toISOString(),
         request: validation.data,
-        response: payload,
+        response: normalizedResponse,
       });
       setErrorMessage(null);
       router.push("/results");

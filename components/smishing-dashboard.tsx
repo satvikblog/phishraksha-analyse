@@ -11,7 +11,7 @@ import {
   SmishingRequest,
   SmishingValidationErrors,
 } from "@/lib/types";
-import { isAnalysisResponse, validateSmishingRequest } from "@/lib/utils";
+import { normalizeAnalysisResponse, validateSmishingRequest } from "@/lib/utils";
 
 const initialFormValues: SmishingRequest = {
   sender_name: "",
@@ -96,14 +96,16 @@ export function SmishingDashboard() {
         throw new Error(details ? `${message} ${details}` : message);
       }
 
-      if (!isAnalysisResponse(payload)) {
+      const normalizedResponse = normalizeAnalysisResponse(payload);
+
+      if (!normalizedResponse) {
         throw new Error("Analyzer returned an unexpected response.");
       }
 
       saveSmishingReportToSession({
         generatedAt: new Date().toISOString(),
         request: validation.data,
-        response: payload,
+        response: normalizedResponse,
       });
       router.push("/smishing/result");
     } catch (error) {

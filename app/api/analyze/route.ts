@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { AnalysisRequest, ApiErrorResponse } from "@/lib/types";
-import { isAnalysisResponse, validateAnalysisRequest } from "@/lib/utils";
+import { normalizeAnalysisResponse, validateAnalysisRequest } from "@/lib/utils";
 
 const DEFAULT_UPSTREAM_URL = "https://api.phishraksha.tech/webhook/check";
 const MAX_NETWORK_ATTEMPTS = 2;
@@ -130,7 +130,9 @@ async function analyzeWithRetries(payload: AnalysisRequest) {
         break;
       }
 
-      if (!isAnalysisResponse(parsed)) {
+      const normalizedResponse = normalizeAnalysisResponse(parsed);
+
+      if (!normalizedResponse) {
         lastFailure = {
           status: 502,
           message: "Live analyzer returned an unexpected payload.",
@@ -142,7 +144,7 @@ async function analyzeWithRetries(payload: AnalysisRequest) {
 
       return {
         ok: true as const,
-        data: parsed,
+        data: normalizedResponse,
       };
     } catch (error) {
       lastFailure = {

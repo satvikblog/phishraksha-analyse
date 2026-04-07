@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { ApiErrorResponse, VishingRequest } from "@/lib/types";
-import { isAnalysisResponse, validateVishingRequest } from "@/lib/utils";
+import { normalizeAnalysisResponse, validateVishingRequest } from "@/lib/utils";
 
 const DEFAULT_UPSTREAM_URL =
   "https://api.phishraksha.tech/webhook/vishing-check";
@@ -129,7 +129,9 @@ async function analyzeWithRetries(payload: VishingRequest) {
         break;
       }
 
-      if (!isAnalysisResponse(parsed)) {
+      const normalizedResponse = normalizeAnalysisResponse(parsed);
+
+      if (!normalizedResponse) {
         lastFailure = {
           status: 502,
           message: "Live vishing analyzer returned an unexpected payload.",
@@ -141,7 +143,7 @@ async function analyzeWithRetries(payload: VishingRequest) {
 
       return {
         ok: true as const,
-        data: parsed,
+        data: normalizedResponse,
       };
     } catch (error) {
       lastFailure = {
